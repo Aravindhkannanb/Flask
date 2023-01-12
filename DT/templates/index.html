@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Expense Tracker App</title>
+    <link href="https://fonts.googleapis.com/css?family=Titillium+Web&display=swap" 
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1 class="title">Expense Tracker App</h1>
+    <header>
+
+    <section class="content">
+        <h3 class="secondTitle">Add a new item: </h3>
+        <div class="form">
+            <form id="expForm" action='http://localhost:4000/message', method='post'>
+                    <span for="type">Type:</span>
+                    <select id="type">
+                        <option value="chooseOne">Choose one...</option>
+                        <option value="Card">Card</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Cryptocoin">Cryptocoin</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span for="name">Name:</span>
+                    <input name="name" type="text" id="name">
+
+                    <span for="date">Date:</span>
+                    <input name="date" type="date" id="date">
+                    <span for="amount">Amount:</span>
+                    <input name="amount" type="text" id="amount">
+                <button type="submit" class="buttonSave">Add a new expense</button>
+            </form>
+        </div>
+    </section>
+    <section class="content">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Options</th>
+                </tr>
+            </thead>
+            <tbody id="expenseTable">
+
+            </tbody>
+        </table>
+    <button type="button" id="download" onclick="tableToCSV()">download CSV</button>
+
+    </section>
+
+</body>
+<style>
+    *{
+        margin:0;
+        font-family: 'Titillium Web', sans-serif;
+    }
+    
+    body{
+        background:#042159;
+        color:#77D9AB;
+    }
+    
+    .title{
+        width: 500px;
+        color:#0869A6;
+        margin:3% auto;
+    }
+    
+    .content{
+        width: 580px;
+        margin: 0 auto;
+        background-color:#0869A6;
+        padding: 3%;
+        padding-left: 6%;
+    }
+    
+    .secondTitle{
+        text-align:left;
+        margin: 2% 0;
+        font-weight: 100;
+    }
+    
+    .form{
+        padding: 5px;
+    }
+    
+    .formLine{
+        display: inline-flex;
+        padding: 5px 0px;
+    }
+    
+    .left{
+        float: left;
+    }
+    
+    .right{
+        float:right;
+        margin-right: 100px;
+    }
+    
+    input, select{
+        width: 130px;
+        margin-left: 10px;
+    }
+    
+    /* table style */
+    table{
+        width: 100%;
+    }
+    
+    thead{
+        background-color:#042159;
+        line-height: 30px;
+    }
+    
+    /* Button */
+    
+    button{
+        width: 200px;
+        color:#fff; 
+        padding: 10px;
+        text-align: center;
+        font-size: 1.1em;
+        line-height: 20px;
+        background-color: #04BF8A;
+        border-radius: 5px;
+        margin: 14px 25%;
+        cursor: pointer;
+    }
+    
+    a{
+        text-decoration: underline;
+        cursor: pointer;
+    }
+</style>
+
+
+<script>
+
+       
+function tableToCSV() {
+ 
+    // Variable to store the final csv data
+    var csv_data = [];
+ 
+    // Get each row data
+    var rows = document.getElementsByTagName('tr');
+    for (var i = 0; i < rows.length; i++) {
+ 
+        // Get each column data
+        var cols = rows[i].querySelectorAll('td,th');
+        // Stores each csv row data
+        var csvrow = [];
+        for (var j = 0; j < cols.length; j++) {
+            
+            // Get the text data of each cell of
+            // a row and push it to csvrow
+            csvrow.push(cols[j].innerHTML);
+        }
+ 
+        // Combine each column value with comma
+        csv_data.push(csvrow.join(","));
+    }
+    // combine each row data with new line character
+    csv_data = csv_data.join('\n');
+    downloadCSVFile(csv_data);
+    /* We will use this function later to download
+    the data in a csv file downloadCSVFile(csv_data);
+    */
+}
+
+function downloadCSVFile(csv_data) {
+
+	// Create CSV file object and feed our
+	// csv_data into it
+    console.log(csv_data)
+	CSVFile = new Blob([csv_data], { type: "text/csv" });
+
+	// Create to temporary link to initiate
+	// download process
+	var temp_link = document.createElement('a');
+
+	// Download csv file
+	temp_link.download = "expenses.csv";
+	var url = window.URL.createObjectURL(CSVFile);
+	temp_link.href = url;
+
+	// This link should not be displayed
+	temp_link.style.display = "none";
+	document.body.appendChild(temp_link);
+
+	// Automatically click the link to trigger download
+	temp_link.click();
+	document.body.removeChild(temp_link);
+}
+
+    document.getElementById('expForm').addEventListener('submit', addExpense);
+    document.getElementById('download').addEventListener('click', downloadCSVFile);
+
+// initial array of expenses, reading from localStorage
+const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+function addExpense(e){
+
+    // get type, name, date, and amount
+    let type = document.getElementById('type').value;
+    let name = document.getElementById('name').value;
+    let date = document.getElementById('date').value;
+    let amount = document.getElementById('amount').value;
+
+    if(type != 'chooseOne' 
+        && name.length > 0 
+        && date != 0 
+        && amount > 0){
+        const expense = {
+            type, 
+            name, 
+            date,
+            amount, 
+            id: expenses.length > 0 ? expenses[expenses.length - 1].id + 1 : 1,
+        }
+
+        expenses.push(expense);
+        // localStorage 
+        localStorage.setItem('expenses', JSON.stringify(expenses));
+    }
+
+    document.getElementById('expForm').reset();
+    showExpenses();
+}
+
+const showExpenses = () => {
+
+    const expenseTable = document.getElementById('expenseTable');
+
+    expenseTable.innerHTML = '';
+
+
+
+    for(let i = 0; i < expenses.length; i++){
+        expenseTable.innerHTML += `
+            <tr>
+                <td>${expenses[i].type}</td>
+                <td>${expenses[i].name}</td>
+                <td>${expenses[i].date}</td>
+                <td>$${expenses[i].amount}</td>
+                <td><a class="deleteButton" onclick="deleteExpense(${expenses[i].id})">
+                    Delete</td>
+            </tr>
+        `;
+    }
+}
+
+const deleteExpense = (id) => {
+    for(let i = 0; i < expenses.length; i++){
+        if(expenses[i].id == id){
+            expenses.splice(i, 1);
+        }
+    }
+
+    // localStorage
+    localStorage.setItem('expenses', JSON.stringify(expenses));
+    showExpenses();
+}
+
+showExpenses();
+</script>
+</html>
